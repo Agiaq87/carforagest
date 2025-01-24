@@ -1,10 +1,10 @@
-li#subtab-CarforaStoreAdmin .mi-settings {
+li#subtab-CarforaGestAdmin .mi-settings {
     font-size: 24px;
     color: #333;
     content: '\e900';
 }
 
-li#subtab-CarforaStoreAdmin .mi-settings::before {
+li#subtab-CarforaGestAdmin .mi-settings::before {
     content: '';
     background: url('../img/logo.ico') no-repeat center center !important;
     display: inline-block;
@@ -12,15 +12,15 @@ li#subtab-CarforaStoreAdmin .mi-settings::before {
     height: 16px;
 }
 
-li#subtab-CarforaStoreAdmin .mi-settings {
+li#subtab-CarforaGestAdmin .mi-settings {
     visibility: hidden; /* Hide the default settings icon */
 }
 
-li#subtab-CarforaStoreAdmin .mi-settings::before {
+li#subtab-CarforaGestAdmin .mi-settings::before {
     visibility: visible; /* Show your custom icon */
 }
 
-.carforastore-resize {
+.carforagest-resize {
     font-size: 16px;
     cursor: pointer;
 }
@@ -59,7 +59,7 @@ li#subtab-CarforaStoreAdmin .mi-settings::before {
     visibility: visible;
 }
 
-.carforastore-margin-std {
+.carforagest-margin-std {
     margin: 0px 4px 16px 0px !important;
 }
 
@@ -75,36 +75,36 @@ li#subtab-CarforaStoreAdmin .mi-settings::before {
     align-content: center;
 }
 
-.carforastore-pd {
+.carforagest-pd {
     padding: 8px;
     margin: 8px;
 }
 
-.carforastore-modal-fit-content{
+.carforagest-modal-fit-content{
     width: fit-content;
 }
 
-.carforastore-border {
+.carforagest-border {
     border-bottom: 1px solid #999;
 }
 
-.carforastore-display-none {
+.carforagest-display-none {
     display: none!important;
 }
 
-.carforastore-button-disabled {
+.carforagest-button-disabled {
     background-color: red !important;
     border: 1px solid red !important;
 }
 
-.carforastore-ok {
+.carforagest-ok {
     border-color: green !important;
 }
 
-.carforastore-warning {
+.carforagest-warning {
     border-color: yellow !important;
 }
 
-.carforastore-ko {
+.carforagest-ko {
     border-color: red !important;
 }

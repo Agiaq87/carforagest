@@ -51,8 +51,16 @@ class carforagest extends Module
 
     public function install(): bool
     {
-        return $this->prepareConfiguration()
-            && $this->installTab()
+        if (!$this->prepareConfiguration()) {
+            $this->errors[] = $this->l('Impossibile creare le configurazioni');
+        }
+
+        if (!$this->installTab()) {
+            $this->errors[] = $this->l('Impossibile creare la tab');
+        }
+
+
+        return parent::install()
             && $this->registerHook('displayBackOfficeHeader')
             && $this->registerHook('moduleRoutes');
     }
@@ -60,15 +68,23 @@ class carforagest extends Module
     protected function prepareConfiguration(): bool
     {
         Configuration::set(CONFIGURATION_HOST_KEY, '');
-        Configuration::set(CONFIGURATION_DB_KEY, '');
+        Configuration::set(CONFIGURATION_PORT_KEY, '');
         Configuration::set(CONFIGURATION_USER_KEY, '');
         Configuration::set(CONFIGURATION_PASS_KEY, '');
-        return (
+
+        $returnedValue = (
             Configuration::hasKey(CONFIGURATION_HOST_KEY) &&
-            Configuration::hasKey(CONFIGURATION_DB_KEY) &&
+            Configuration::hasKey(CONFIGURATION_PORT_KEY) &&
             Configuration::hasKey(CONFIGURATION_USER_KEY) &&
             Configuration::hasKey(CONFIGURATION_PASS_KEY)
         );
+
+        if (!$returnedValue) {
+            $this->errors[] = $this->l('Impossibile creare le configurazioni');
+            return false;
+        }
+
+        return true;
     }
 
     protected function installTab(): bool
@@ -148,7 +164,7 @@ class carforagest extends Module
     protected function deleteConfiguration(): bool
     {
         return Configuration::deleteByName(CONFIGURATION_HOST_KEY) &&
-            Configuration::deleteByName(CONFIGURATION_DB_KEY) &&
+            Configuration::deleteByName(CONFIGURATION_PORT_KEY) &&
             Configuration::deleteByName(CONFIGURATION_USER_KEY) &&
             Configuration::deleteByName(CONFIGURATION_PASS_KEY);
     }
@@ -159,14 +175,14 @@ class carforagest extends Module
 
         if (Tools::isSubmit('submit' . $this->name)) {
             $host = Tools::getValue(CONFIGURATION_HOST_KEY);
-            $db = Tools::getValue(CONFIGURATION_DB_KEY);
+            $db = Tools::getValue(CONFIGURATION_PORT_KEY);
             $user = Tools::getValue(CONFIGURATION_USER_KEY);
             $pass = Tools::getValue(CONFIGURATION_PASS_KEY);
 
             if (
                 $this->updateConfiguration([
                     CONFIGURATION_HOST_KEY => $host,
-                    CONFIGURATION_DB_KEY => $db,
+                    CONFIGURATION_PORT_KEY => $db,
                     CONFIGURATION_USER_KEY => $user,
                     CONFIGURATION_PASS_KEY => $pass
                 ])
@@ -190,8 +206,8 @@ class carforagest extends Module
             Configuration::updateValue(CONFIGURATION_HOST_KEY, $values[CONFIGURATION_HOST_KEY]);
         }
 
-        if (isset($values[CONFIGURATION_DB_KEY])) {
-            Configuration::updateValue(CONFIGURATION_DB_KEY, $values[CONFIGURATION_DB_KEY]);
+        if (isset($values[CONFIGURATION_PORT_KEY])) {
+            Configuration::updateValue(CONFIGURATION_PORT_KEY, $values[CONFIGURATION_PORT_KEY]);
         }
 
         if (isset($values[CONFIGURATION_USER_KEY])) {
@@ -224,8 +240,8 @@ class carforagest extends Module
                         ],
                         [
                             'type' => 'text',
-                            'label' => $this->l('Inserisci il DB del server carforagest'),
-                            'name' => CONFIGURATION_DB_KEY,
+                            'label' => $this->l('Inserisci la porta del server carforagest'),
+                            'name' => CONFIGURATION_PORT_KEY,
                             'size' => 100,
                             'required' => true
                         ],
@@ -261,7 +277,7 @@ class carforagest extends Module
         $helper->title = $this->displayName;
         $helper->submit_action = 'submit' . $this->name;
         $helper->fields_value[CONFIGURATION_HOST_KEY] = $configurationValues[CONFIGURATION_HOST_KEY];
-        $helper->fields_value[CONFIGURATION_DB_KEY] = $configurationValues[CONFIGURATION_DB_KEY];
+        $helper->fields_value[CONFIGURATION_PORT_KEY] = $configurationValues[CONFIGURATION_PORT_KEY];
         $helper->fields_value[CONFIGURATION_USER_KEY] = $configurationValues[CONFIGURATION_USER_KEY];
         $helper->fields_value[CONFIGURATION_PASS_KEY] = $configurationValues[CONFIGURATION_PASS_KEY];
 
@@ -273,7 +289,7 @@ class carforagest extends Module
     {
         return [
             CONFIGURATION_HOST_KEY => Configuration::get(CONFIGURATION_HOST_KEY),
-            CONFIGURATION_DB_KEY => Configuration::get(CONFIGURATION_DB_KEY),
+            CONFIGURATION_PORT_KEY => Configuration::get(CONFIGURATION_PORT_KEY),
             CONFIGURATION_USER_KEY => Configuration::get(CONFIGURATION_USER_KEY),
             CONFIGURATION_PASS_KEY => Configuration::get(CONFIGURATION_PASS_KEY),
         ];
