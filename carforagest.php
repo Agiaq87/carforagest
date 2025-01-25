@@ -71,12 +71,22 @@ class carforagest extends Module
         Configuration::set(CONFIGURATION_PORT_KEY, '');
         Configuration::set(CONFIGURATION_USER_KEY, '');
         Configuration::set(CONFIGURATION_PASS_KEY, '');
+        Configuration::set(CONFIGURATION_REQUIRED_SSH_TUNNEL, 0);
+        Configuration::set(CONFIGURATION_SSH_TUNNEL_HOST, '');
+        Configuration::set(CONFIGURATION_SSH_TUNNEL_PORT, '');
+        Configuration::set(CONFIGURATION_SSH_TUNNEL_USER, '');
+        Configuration::set(CONFIGURATION_SSH_TUNNEL_PASS, '');
 
         $returnedValue = (
             Configuration::hasKey(CONFIGURATION_HOST_KEY) &&
             Configuration::hasKey(CONFIGURATION_PORT_KEY) &&
             Configuration::hasKey(CONFIGURATION_USER_KEY) &&
-            Configuration::hasKey(CONFIGURATION_PASS_KEY)
+            Configuration::hasKey(CONFIGURATION_PASS_KEY) &&
+            Configuration::hasKey(CONFIGURATION_REQUIRED_SSH_TUNNEL) &&
+            Configuration::hasKey(CONFIGURATION_SSH_TUNNEL_HOST) &&
+            Configuration::hasKey(CONFIGURATION_SSH_TUNNEL_PORT) &&
+            Configuration::hasKey(CONFIGURATION_SSH_TUNNEL_USER) &&
+            Configuration::hasKey(CONFIGURATION_SSH_TUNNEL_PASS)
         );
 
         if (!$returnedValue) {
@@ -129,7 +139,7 @@ class carforagest extends Module
     public function hookDisplayBackOfficeHeader($params): bool
     {
         $this->context->controller->addCSS($this->_path . 'views/css/admin_carforagest.css', 'all');
-        //$this->context->controller->addJS($this->_path . 'views/js/admin_carforagest.js');
+        $this->context->controller->addJS($this->_path . 'views/js/admin_carforagest.js');
         //$this->context->controller->addJS($this->_path . 'views/js/ajax_carforagest.js');
         return true;
     }
@@ -166,7 +176,12 @@ class carforagest extends Module
         return Configuration::deleteByName(CONFIGURATION_HOST_KEY) &&
             Configuration::deleteByName(CONFIGURATION_PORT_KEY) &&
             Configuration::deleteByName(CONFIGURATION_USER_KEY) &&
-            Configuration::deleteByName(CONFIGURATION_PASS_KEY);
+            Configuration::deleteByName(CONFIGURATION_PASS_KEY) &&
+            Configuration::deleteByName(CONFIGURATION_REQUIRED_SSH_TUNNEL) &&
+            Configuration::deleteByName(CONFIGURATION_SSH_TUNNEL_HOST) &&
+            Configuration::deleteByName(CONFIGURATION_SSH_TUNNEL_PORT) &&
+            Configuration::deleteByName(CONFIGURATION_SSH_TUNNEL_USER) &&
+            Configuration::deleteByName(CONFIGURATION_SSH_TUNNEL_PASS);
     }
 
     public function getContent()
@@ -178,13 +193,23 @@ class carforagest extends Module
             $db = Tools::getValue(CONFIGURATION_PORT_KEY);
             $user = Tools::getValue(CONFIGURATION_USER_KEY);
             $pass = Tools::getValue(CONFIGURATION_PASS_KEY);
+            $sshTunnel = Tools::getValue(CONFIGURATION_REQUIRED_SSH_TUNNEL);
+            $sshHost = Tools::getValue(CONFIGURATION_SSH_TUNNEL_HOST);
+            $sshPort = Tools::getValue(CONFIGURATION_SSH_TUNNEL_PORT);
+            $sshUser = Tools::getValue(CONFIGURATION_SSH_TUNNEL_USER);
+            $sshPass = Tools::getValue(CONFIGURATION_SSH_TUNNEL_PASS);
 
             if (
                 $this->updateConfiguration([
                     CONFIGURATION_HOST_KEY => $host,
                     CONFIGURATION_PORT_KEY => $db,
                     CONFIGURATION_USER_KEY => $user,
-                    CONFIGURATION_PASS_KEY => $pass
+                    CONFIGURATION_PASS_KEY => $pass,
+                    CONFIGURATION_REQUIRED_SSH_TUNNEL => $sshTunnel,
+                    CONFIGURATION_SSH_TUNNEL_HOST => $sshHost,
+                    CONFIGURATION_SSH_TUNNEL_PORT => $sshPort,
+                    CONFIGURATION_SSH_TUNNEL_USER => $sshUser,
+                    CONFIGURATION_SSH_TUNNEL_PASS => $sshPass,
                 ])
             ) {
                 $output .= $this->displayConfirmation($this->l('Impostazioni aggiornate con successo.'));
@@ -218,6 +243,26 @@ class carforagest extends Module
             Configuration::updateValue(CONFIGURATION_PASS_KEY, $values[CONFIGURATION_PASS_KEY]);
         }
 
+        if (isset($values[CONFIGURATION_REQUIRED_SSH_TUNNEL])) {
+            Configuration::updateValue(CONFIGURATION_REQUIRED_SSH_TUNNEL, $values[CONFIGURATION_REQUIRED_SSH_TUNNEL]);
+        }
+
+        if (isset($values[CONFIGURATION_SSH_TUNNEL_HOST])) {
+            Configuration::updateValue(CONFIGURATION_SSH_TUNNEL_HOST, $values[CONFIGURATION_SSH_TUNNEL_HOST]);
+        }
+
+        if (isset($values[CONFIGURATION_SSH_TUNNEL_PORT])) {
+            Configuration::updateValue(CONFIGURATION_SSH_TUNNEL_PORT, $values[CONFIGURATION_SSH_TUNNEL_PORT]);
+        }
+
+        if (isset($values[CONFIGURATION_SSH_TUNNEL_USER])) {
+            Configuration::updateValue(CONFIGURATION_SSH_TUNNEL_USER, $values[CONFIGURATION_SSH_TUNNEL_USER]);
+        }
+
+        if (isset($values[CONFIGURATION_SSH_TUNNEL_PASS])) {
+            Configuration::updateValue(CONFIGURATION_SSH_TUNNEL_PASS, $values[CONFIGURATION_SSH_TUNNEL_PASS]);
+        }
+
         return true;
     }
 
@@ -228,40 +273,100 @@ class carforagest extends Module
             0 => [
                 'form' => [
                     'legend' => [
-                        'title' => $this->l('Impostazioni della pagina \"Come raggiungerci\"'),
+                        'title' => $this->l('Impostazioni connessioni DB'),
                     ],
                     'input' => [
                         [
                             'type' => 'text',
-                            'label' => $this->l('Inserisci l\'host del server carforagest'),
+                            'label' => $this->l('Hostname/IP:'),
                             'name' => CONFIGURATION_HOST_KEY,
                             'size' => 100,
                             'required' => true
                         ],
                         [
                             'type' => 'text',
-                            'label' => $this->l('Inserisci la porta del server carforagest'),
+                            'label' => $this->l('Porta:'),
                             'name' => CONFIGURATION_PORT_KEY,
                             'size' => 100,
                             'required' => true
                         ],
                         [
                             'type' => 'text',
-                            'label' => $this->l('Inserisci l\'user del server carforagest'),
+                            'label' => $this->l('User:'),
                             'name' => CONFIGURATION_USER_KEY,
                             'size' => 100,
                             'required' => true
                         ],
                         [
-                            'type' => 'text',
-                            'label' => $this->l('Inserisci la password del server carforagest'),
+                            'type' => 'password',
+                            'label' => $this->l('Password:'),
                             'name' => CONFIGURATION_PASS_KEY,
                             'size' => 100,
                             'required' => true
-                        ]
+                        ],
                     ],
                     'submit' => [
-                        'title' => $this->l('Save'),
+                        'title' => $this->l('Salva dati DB'),
+                        'class' => 'btn btn-default pull-right'
+                    ]
+                ]
+            ],
+            1 => [
+                'form' => [
+                    'legend' => [
+                        'title' => $this->l('Tunnel SSH'),
+                    ],
+                    'input' => [
+                        [
+                            'type' => 'hidden',
+                            'name' => 'ssh_tunnel_configuration'
+                        ],
+                        [
+                            'type' => 'switch',
+                            'label' => $this->l('Abilita SSH tunnel'),
+                            'name' => CONFIGURATION_REQUIRED_SSH_TUNNEL,
+                            'is_bool' => true,
+                            'on_change' => 'setupInput',
+                            'values' => [
+                                [
+                                    'id' => 'active_on',
+                                    'value' => 1,
+                                    'label' => $this->l('Sì')
+                                ],
+                                [
+                                    'id' => 'active_off',
+                                    'value' => 0,
+                                    'label' => $this->l('No')
+                                ],
+                            ]
+                        ],
+                        [
+                            'type' => 'text',
+                            'label' => $this->l('Host SSH:'),
+                            'name' => CONFIGURATION_SSH_TUNNEL_HOST,
+                            'size' => 100,
+                        ],
+                        [
+                            'type' => 'text',
+                            'label' => $this->l('Porta SSH:'),
+                            'name' => CONFIGURATION_SSH_TUNNEL_PORT,
+                            'size' => 100,
+                        ],
+                        [
+                            'type' => 'text',
+                            'label' => $this->l('User SSH:'),
+                            'name' => CONFIGURATION_SSH_TUNNEL_USER,
+                            'size' => 100,
+                        ],
+                        [
+                            'type' => 'password',
+                            'label' => $this->l('Password SSH:'),
+                            'name' => CONFIGURATION_SSH_TUNNEL_PASS,
+                            'size' => 100,
+                        ],
+                    ],
+                    'submit' => [
+                        'title' => $this->l('Salva dati tunnel SSH'),
                         'class' => 'btn btn-default pull-right'
                     ]
                 ]
@@ -280,7 +385,13 @@ class carforagest extends Module
         $helper->fields_value[CONFIGURATION_PORT_KEY] = $configurationValues[CONFIGURATION_PORT_KEY];
         $helper->fields_value[CONFIGURATION_USER_KEY] = $configurationValues[CONFIGURATION_USER_KEY];
         $helper->fields_value[CONFIGURATION_PASS_KEY] = $configurationValues[CONFIGURATION_PASS_KEY];
-
+        $helper->fields_value[CONFIGURATION_REQUIRED_SSH_TUNNEL] = $configurationValues[CONFIGURATION_REQUIRED_SSH_TUNNEL];
+        $helper->fields_value[CONFIGURATION_SSH_TUNNEL_HOST] = $configurationValues[CONFIGURATION_SSH_TUNNEL_HOST];
+        $helper->fields_value[CONFIGURATION_SSH_TUNNEL_PORT] = $configurationValues[CONFIGURATION_SSH_TUNNEL_PORT];
+        $helper->fields_value[CONFIGURATION_SSH_TUNNEL_USER] = $configurationValues[CONFIGURATION_SSH_TUNNEL_USER];
+        $helper->fields_value[CONFIGURATION_SSH_TUNNEL_PASS] = $configurationValues[CONFIGURATION_SSH_TUNNEL_PASS];
+        $helper->fields_value['ssh_tunnel_configuration'] = $configurationValues[CONFIGURATION_REQUIRED_SSH_TUNNEL];
+        print_r($configurationValues);
 
         return $helper->generateForm($fieldForm);
     }
@@ -292,6 +403,11 @@ class carforagest extends Module
             CONFIGURATION_PORT_KEY => Configuration::get(CONFIGURATION_PORT_KEY),
             CONFIGURATION_USER_KEY => Configuration::get(CONFIGURATION_USER_KEY),
             CONFIGURATION_PASS_KEY => Configuration::get(CONFIGURATION_PASS_KEY),
+            CONFIGURATION_REQUIRED_SSH_TUNNEL => Configuration::get(CONFIGURATION_REQUIRED_SSH_TUNNEL),
+            CONFIGURATION_SSH_TUNNEL_HOST => Configuration::get(CONFIGURATION_SSH_TUNNEL_HOST),
+            CONFIGURATION_SSH_TUNNEL_PORT => Configuration::get(CONFIGURATION_SSH_TUNNEL_PORT),
+            CONFIGURATION_SSH_TUNNEL_USER => Configuration::get(CONFIGURATION_SSH_TUNNEL_USER),
+            CONFIGURATION_SSH_TUNNEL_PASS => Configuration::get(CONFIGURATION_SSH_TUNNEL_PASS),
         ];
     }
 }
