@@ -26,6 +26,7 @@ if (!defined('_PS_VERSION_')) {
 }
 
 require_once 'classes/constants.php';
+require_once 'classes/Ssh2Checker.php';
 
 class carforagest extends Module
 {
@@ -273,6 +274,16 @@ class carforagest extends Module
             0 => [
                 'form' => [
                     'legend' => [
+                        'title' => $this->l('Libreria PhpSsh2'),
+                    ],
+                    'input' => [
+                        'type' => 'text',
+                    ],
+                ]
+            ],
+            1 => [
+                'form' => [
+                    'legend' => [
                         'title' => $this->l('Impostazioni connessioni DB'),
                     ],
                     'input' => [
@@ -311,7 +322,7 @@ class carforagest extends Module
                     ]
                 ]
             ],
-            1 => [
+            2 => [
                 'form' => [
                     'legend' => [
                         'title' => $this->l('Tunnel SSH'),
@@ -390,7 +401,6 @@ class carforagest extends Module
         $helper->fields_value[CONFIGURATION_SSH_TUNNEL_PORT] = $configurationValues[CONFIGURATION_SSH_TUNNEL_PORT];
         $helper->fields_value[CONFIGURATION_SSH_TUNNEL_USER] = $configurationValues[CONFIGURATION_SSH_TUNNEL_USER];
         $helper->fields_value[CONFIGURATION_SSH_TUNNEL_PASS] = $configurationValues[CONFIGURATION_SSH_TUNNEL_PASS];
-        $helper->fields_value['ssh_tunnel_configuration'] = $configurationValues[CONFIGURATION_REQUIRED_SSH_TUNNEL];
         print_r($configurationValues);
 
         return $helper->generateForm($fieldForm);

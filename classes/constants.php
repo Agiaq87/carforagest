@@ -1,4 +1,5 @@
 <?php
+const PHP_SSH2_INSTALLED = 'php_ssh2_installed';
 const CONFIGURATION_HOST_KEY = 'carforagest_configuration_host';
 const CONFIGURATION_PORT_KEY = 'carforagest_configuration_port';
 const CONFIGURATION_USER_KEY = 'carforagest_configuration_user';
