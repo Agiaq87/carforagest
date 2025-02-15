@@ -190,6 +190,7 @@ class carforagest extends Module
         $output = '';
 
         if (Tools::isSubmit('submit' . $this->name)) {
+            $phpSsh2 = Tools::getValue(PHP_SSH2_INSTALLED);
             $host = Tools::getValue(CONFIGURATION_HOST_KEY);
             $db = Tools::getValue(CONFIGURATION_PORT_KEY);
             $user = Tools::getValue(CONFIGURATION_USER_KEY);
@@ -202,6 +203,7 @@ class carforagest extends Module
 
             if (
                 $this->updateConfiguration([
+                    PHP_SSH2_INSTALLED => $phpSsh2,
                     CONFIGURATION_HOST_KEY => $host,
                     CONFIGURATION_PORT_KEY => $db,
                     CONFIGURATION_USER_KEY => $user,
@@ -274,17 +276,42 @@ class carforagest extends Module
             0 => [
                 'form' => [
                     'legend' => [
+                        'icon' => 'icon-book',
                         'title' => $this->l('Libreria PhpSsh2'),
                     ],
-                    'input' => [
-                        'type' => 'text',
-                    ],
+                        'input' => [
+                            [
+                                'type' => 'switch',
+                                'label' => $this->l('Attiva'),
+                                'desc' => $this->l('Abilita o disabilita la libreria'),
+                                'name' => PHP_SSH2_INSTALLED,
+                                'is_bool' => true,
+                                'disabled' => true,
+                                'values' => [
+                                    [
+                                        'id' => PHP_SSH2_INSTALLED.'_on',
+                                        'value' => 1,
+                                        'label' => $this->l('Sì')
+                                    ],
+                                    [
+                                        'id' => PHP_SSH2_INSTALLED.'_off',
+                                        'value' => 0,
+                                        'label' => $this->l('No')
+                                    ]
+                                ]
+                            ]
+                        ],
+                    'submit' => [
+                        'title' => $this->l('Salva'),
+                        'class' => 'btn btn-default pull-right',
+                    ]
                 ]
             ],
             1 => [
                 'form' => [
                     'legend' => [
                         'title' => $this->l('Impostazioni connessioni DB'),
+                        'icon' => 'icon-random',
                     ],
                     'input' => [
                         [
@@ -318,7 +345,8 @@ class carforagest extends Module
                     ],
                     'submit' => [
                         'title' => $this->l('Salva dati DB'),
-                        'class' => 'btn btn-default pull-right'
+                        'class' => 'btn btn-default pull-right',
+                        'icon' => 'fa-solid fa-floppy-disk'
                     ]
                 ]
             ],
@@ -326,6 +354,7 @@ class carforagest extends Module
                 'form' => [
                     'legend' => [
                         'title' => $this->l('Tunnel SSH'),
+                        'icon' => 'icon-exchange',
                     ],
                     'input' => [
                         [
@@ -378,7 +407,8 @@ class carforagest extends Module
                     ],
                     'submit' => [
                         'title' => $this->l('Salva dati tunnel SSH'),
-                        'class' => 'btn btn-default pull-right'
+                        'class' => 'btn btn-default pull-right',
+                        'icon' => 'fa-solid fa-floppy-disk'
                     ]
                 ]
             ]
@@ -392,6 +422,7 @@ class carforagest extends Module
         $helper->token = Tools::getAdminTokenLite('AdminModules');
         $helper->title = $this->displayName;
         $helper->submit_action = 'submit' . $this->name;
+        $helper->fields_value[PHP_SSH2_INSTALLED] = $configurationValues[PHP_SSH2_INSTALLED] ?: 0;
         $helper->fields_value[CONFIGURATION_HOST_KEY] = $configurationValues[CONFIGURATION_HOST_KEY];
         $helper->fields_value[CONFIGURATION_PORT_KEY] = $configurationValues[CONFIGURATION_PORT_KEY];
         $helper->fields_value[CONFIGURATION_USER_KEY] = $configurationValues[CONFIGURATION_USER_KEY];
@@ -409,6 +440,7 @@ class carforagest extends Module
     protected function getConfigurationValues(): array
     {
         return [
+            PHP_SSH2_INSTALLED => Ssh2Checker::isSsh2LibraryInstalled(),
             CONFIGURATION_HOST_KEY => Configuration::get(CONFIGURATION_HOST_KEY),
             CONFIGURATION_PORT_KEY => Configuration::get(CONFIGURATION_PORT_KEY),
             CONFIGURATION_USER_KEY => Configuration::get(CONFIGURATION_USER_KEY),

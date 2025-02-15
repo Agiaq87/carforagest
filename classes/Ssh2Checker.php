@@ -21,6 +21,6 @@ class Ssh2Checker
 
     public static function isSsh2LibraryInstalled(): bool
     {
-        return extension_loaded('ssh2');
+        return function_exists('ssh2') || false;
     }
 }
