@@ -156,21 +156,27 @@ class CarforaGestAdminController extends ModuleAdminController
                 //$manufacturer->description = $description;
                 $manufacturer->active = $active;
 
+                $names = array();
+                $link_rewrites = array();
+
                 // Imposta il nome per tutte le lingue del negozio
                 $languages = Language::getLanguages(false);
-                foreach ($languages as $language) {
-                    $manufacturer->name[$language['id_lang']] = $name;
-                    //$manufacturer->description[$language['id_lang']] = $description;
+                foreach ($languages as $lang) {
+                    $names[$lang['id_lang']] = $name;
+                    $link_rewrites[$lang['id_lang']] = Tools::linkRewrite($name);
                 }
+
+                $manufacturer->name = $names;
+                $manufacturer->link_rewrite = $link_rewrites;
+                $manufacturer->active = $active;
 
                 try {
                     print_r($manufacturer);
-                    $manufacturer->add();
-
-                    // Genera URL rewrite per tutte le lingue
-                    foreach ($languages as $language) {
-                        $link_rewrite = Tools::link_rewrite($name);
-                        $manufacturer->link_rewrite[$language['id_lang']] = $link_rewrite;
+                    if (!$manufacturer->add()) {
+                        return [
+                            'status' => false,
+                            'error' => 'Impossibile aggiungere il marchio' .  $name
+                        ];
                     }
 
                     $manufacturer->save();
