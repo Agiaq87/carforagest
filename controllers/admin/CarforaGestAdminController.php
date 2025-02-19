@@ -5,12 +5,19 @@ if (!defined('_PS_VERSION_')) {
 }
 
 require_once _PS_MODULE_DIR_ . 'carforagest/classes/FileUtils.php';
+require_once _PS_MODULE_DIR_ . 'carforagest/classes/ManufacturerImporter.php';
+require_once _PS_MODULE_DIR_ . 'carforagest/classes/Consumer.php';
 
-class CarforaGestAdminController extends ModuleAdminController
+class CarforaGestAdminController extends ModuleAdminController implements Consumer
 {
+    private AjaxInfo $lastAjaxInfo;
+    private array $selection;
+    private string|null $selected;
+    private array $extractedData = array();
+    private ManufacturerImporter $manufacturerImporter;
     public function __construct()
     {
-        $this->selection = ["CSV", "DB"];
+        $this->selection = ["CSV", "DB", "FILE", "MANUFACTURERS_CSV"];
         $this->selected = null;
         $this->bootstrap = true;
 
@@ -21,17 +28,39 @@ class CarforaGestAdminController extends ModuleAdminController
         // Rimuovi la lista predefinita se presente
         $this->list_no_link = true;
         $this->table = false;
+
+        // Classi di utilità
+        $this->manufacturerImporter = new ManufacturerImporter(Language::getLanguages(false));
+        $this->manufacturerImporter->setListener([$this, 'handleMessage']);
+        $this->fileUtils = new FileUtils();
+
+        $this->lastAjaxInfo = new AjaxInfo(new CarforaGestResult(true, "OK", null), 1, 1);
+
+        //
         parent::__construct();
     }
 
     public function initContent()
     {
-        if ($this->selected === $this->selection[0]) {
-            $this->content = $this->displayCsvForm();
-        } else if ($this->selected === $this->selection[1]) {
-            $this->content = $this->displayDbForm();
-        } else {
-            $this->content = $this->displayDefaultButtons();
+        switch ($this->selected) {
+            case $this->selection[0]: { // "CSV"
+                $this->content = $this->displayCsvForm();
+                break;
+            }
+            case $this->selection[1]: { // "DB"
+                $this->content = $this->displayDbForm();
+                break;
+            }
+            case $this->selection[2]: { // "FILE"
+                $this->content = $this->displayProgress();
+                $this->handleFileImport(5, $this->selection[3]);
+                print_r($this->extractedData);
+                break;
+            }
+            default: {
+                $this->content = $this->displayDefaultButtons();
+                break;
+            }
         }
 
         parent::initContent();
@@ -39,37 +68,56 @@ class CarforaGestAdminController extends ModuleAdminController
 
     public function postProcess()
     {
+        // Va alla pagina di import csv
         if (Tools::isSubmit('submit_carforagest_csv')) {
             $this->selected = $this->selection[0];
         }
-
+        // Va alla pagina import db
         if (Tools::isSubmit('submit_carforagest_db')) {
             $this->selected = $this->selection[1];
         }
-
+        // Va alla pagina di import con la progress bar
+        if (Tools::isSubmit('csv_upload')) {
+            print_r("submit csv catched");
+            $this->selected = $this->selection[2];
+        }
+        // Va alla pagina principale
         if (Tools::isSubmit('submit_carforagest_home')) {
             $this->selected = null;
+        }
+
+        // Operazioni con i listener
+        if (Tools::isSubmit(SUBMIT_NAME_CSV_MANUFACTURERS_UPLOAD)) {
+            if (empty($this->extractedData)) {
+                $this->handleResult(new CarforaGestResult(false, "Nessun file caricato", null));
+                return;
+            }
+            $this->manufacturerImporter->importManufacturers($this->extractedData);
+        }
+
+        // AJAX
+        if (Tools::isSubmit('ajaxCheck')) {
+            $this->handleAjax();
         }
 
         if (Tools::isSubmit('return')) {
             $this->selected = null;
         }
 
-        if (Tools::isSubmit('csv_upload')) {
-            print_r("submit csv catched");
-            print_r($_FILES['csv_file']);
-            $this->handleResult($this->processCsvImport($_FILES['csv_file']));
-        }
-
         parent::postProcess();
     }
 
-    private function handleResult(array $result)
+    private function handleResult(CarforaGestResult $result)
     {
-        if (!$result['status']) {
-            $this->errors[] = $this->l($result['error']);
+        $message = $this->l($result->message);
+        if (!$result-> status) {
+            $this->errors[] = $message;
+            PrestaShopLogger::addLog(
+                $message,
+                3
+            );
         } else {
-            $this->confirmations[] = $this->l($result['message']);
+            $this->confirmations[] = $message;
         }
     }
 
@@ -105,93 +153,37 @@ class CarforaGestAdminController extends ModuleAdminController
         return '';
     }
 
-    private function processCsvImport(array $file, string $separator = ',', bool $haveHeader = false): array
+    private function displayProgress(): string
     {
-        if (FileUtils::checkFileExists($file)) {
-            return[
-                'status' => false,
-                'error' => 'Nessun file caricato'
-            ];
-        }
+        $mode = '';
+        $nextButton = '';
+        $cancelButton = '';
+        print_r("DISPLAY_PROGRESS");
 
-        if (FileUtils::checkUploadOk($file)) {
-            return[
-                'status' => false,
-                'error' => 'Errore nel caricamento del file'
-            ];
-        }
-
-        if (FileUtils::checkFileExtension($file, 'csv')) {
-            return [
-                'status' => false,
-                'error' => 'Estensione del file caricato non valida'
-            ];
-        }
-
-        $file = $file['tmp_name'];
-        if (!($handle = fopen($file, 'r'))) {
-            return [
-                'status' => false,
-                'error' => 'Impossibile caricare il file'
-            ];
-        }
-
-        // Salta l'intestazione se presente
-        if ($haveHeader) {
-            $headers = fgetcsv($handle);
-        }
-
-        while (($data = fgetcsv($handle)) !== false) {
-            // Assumiamo che il CSV abbia le colonne: name,active
-            $name = isset($data[2]) ? $data[2] : '';
-            $active = isset($data[1]) ? (int)$data[1] : 1;
-
-            // Controlla se il manufacturer esiste già
-            $manufacturerId = Manufacturer::getIdByName($name);
-
-            if (!$manufacturerId) {
-                // Crea nuovo manufacturer
-                $manufacturer = new Manufacturer();
-                $manufacturer->name = $name;
-                //$manufacturer->description = $description;
-                $manufacturer->active = $active;
-
-                $names = array();
-                $link_rewrites = array();
-
-                // Imposta il nome per tutte le lingue del negozio
-                $languages = Language::getLanguages(false);
-                foreach ($languages as $lang) {
-                    $names[$lang['id_lang']] = $name;
-                    $link_rewrites[$lang['id_lang']] = Tools::linkRewrite($name);
-                }
-
-                $manufacturer->name = $names;
-                $manufacturer->link_rewrite = $link_rewrites;
-                $manufacturer->active = $active;
-
-                try {
-                    print_r($manufacturer);
-                    if (!$manufacturer->add()) {
-                        return [
-                            'status' => false,
-                            'error' => 'Impossibile aggiungere il marchio' .  $name
-                        ];
-                    }
-
-                    $manufacturer->save();
-                } catch (Exception $e) {
-                    PrestaShopLogger::addLog(
-                        'Error importing manufacturer: ' . $e->getMessage(),
-                        3
-                    );
-                    continue;
-                }
+        switch ($this->selected) {
+            case $this->selection[2]: {
+                $mode = 'csv';
+                $nextButton = 'Carica i dati estratti dal file CSV';
+                $submitName = SUBMIT_NAME_CSV_MANUFACTURERS_UPLOAD;
+                $cancelButton = 'Annulla';
+                break;
+            }
+            case $this->selection[3]: {
+                $mode = 'manufacturers';
+                break;
             }
         }
 
-        fclose($handle);
-        return ['status' => true, 'message' => 'Import dei marchi caricato con successo'];
+        $this->context->smarty->assign([
+            'url' => $this->module->getPathUri(),
+            'token' => $this->token,
+            'mode' => $mode,
+            'submit_name' => $submitName,
+            'next_button' => $nextButton,
+            'cancel_button' => $cancelButton,
+        ]);
+
+        return $this->context->smarty->fetch('module:carforagest/views/templates/admin/import_progress.tpl');
     }
 
     private function processDbImport()
@@ -224,5 +216,34 @@ class CarforaGestAdminController extends ModuleAdminController
         } catch (Exception $e) {
             $this->errors[] = $this->l('Errore durante l\'importazione: ') . $e->getMessage();
         }
+    }
+
+    /**
+     * Gestisce i valori da passare con AJAX
+     * @param array $info
+     * @return void
+     */
+    public function handleMessage(AjaxInfo $info)
+    {
+        $this->lastAjaxInfo = $info;
+    }
+
+    public function handleAjax()
+    {
+        die($this->lastAjaxInfo->toJson());
+    }
+
+    public function handleFileImport(int $maxNumOfColumn, string $nextStep)
+    {
+        $result = $this->fileUtils->extractData($maxNumOfColumn); // TODO gestire il numero di colonne per i prodotti
+        if (!$result->status) {
+            return $result;
+        }
+
+        $this->selected = $nextStep; // "MANUFACTURERS_CSV"
+        $this->extractedData = $result->data;
+        print_r($this->extractedData);
+        //$result = $this->manufacturerImporter->importManufacturers($this->extractedData); IT WORK!!!
+        $this->handleResult(new CarforaGestResult(true, "File estratto con successo", null));
     }
 }

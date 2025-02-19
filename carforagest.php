@@ -140,8 +140,9 @@ class carforagest extends Module
     public function hookDisplayBackOfficeHeader($params): bool
     {
         $this->context->controller->addCSS($this->_path . 'views/css/admin_carforagest.css', 'all');
+        $this->context->controller->addCSS($this->_path . 'views/css/admin_loader_carforagest.css', 'all');
         $this->context->controller->addJS($this->_path . 'views/js/admin_carforagest.js');
-        //$this->context->controller->addJS($this->_path . 'views/js/ajax_carforagest.js');
+        $this->context->controller->addJS($this->_path . 'views/js/ajax_carfora_gest.js');
         return true;
     }
 

@@ -9,3 +9,6 @@ const CONFIGURATION_SSH_TUNNEL_HOST = 'carforagest_configuration_ssh_tunnel_host
 const CONFIGURATION_SSH_TUNNEL_PORT = 'carforagest_configuration_ssh_tunnel_port';
 const CONFIGURATION_SSH_TUNNEL_USER = 'carforagest_configuration_ssh_tunnel_user';
 const CONFIGURATION_SSH_TUNNEL_PASS = 'carforagest_configuration_ssh_tunnel_pass';
+
+// ADMIN
+const SUBMIT_NAME_CSV_MANUFACTURERS_UPLOAD = 'csv_manufacturers_upload';
