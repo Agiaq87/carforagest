@@ -32,4 +32,18 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log("click switchOff");
         setupInput(inputs, false);
     })
+
+    function copyQuery() {
+        const queryInput = document.getElementById('sql-query');
+        queryInput.select();
+        document.execCommand('copy');
+
+        // Feedback visivo
+        const btn = event.currentTarget;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="icon-check"></i> Copiato!';
+        setTimeout(() => {
+            btn.innerHTML = originalText;
+        }, 2000);
+    }
 });
