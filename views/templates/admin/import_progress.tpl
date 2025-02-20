@@ -47,14 +47,18 @@
                                id="mode"
                                value="{$mode}">
                         <input type="hidden"
-                               name="action"
-                               id="action"
-                               value="{$mode}">
-                        <button type="submit" id="next-button" name="{$submit_name}" class="btn btn-success">
-                            <i class="icon-cloud-upload"></i> {l s=$next_button mod='carforagest'}
+                               name="argument"
+                               id="argument"
+                               value="{$argument}">
+                        <input type="hidden"
+                               name="step"
+                               id="step"
+                               value="{$step}">
+                        <button type="submit" id="start_import" name="start_import" class="btn btn-success">
+                            <i class="icon-cloud-upload"></i> Avvia Importazione
                         </button>
-                        <button type="submit" id="return-button" name="return" class="btn btn-default pull-right">
-                            <i class="icon-back"></i> {l s=$cancel_button mod='carforagest'}
+                        <button type="submit" id="dashboard_button" name="dashboard_button" class="btn btn-default pull-right">
+                            <i class="icon-back"></i> Torna alla dashboard
                         </button>
                     </div>
                 </div>

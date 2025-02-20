@@ -11,4 +11,10 @@ const CONFIGURATION_SSH_TUNNEL_USER = 'carforagest_configuration_ssh_tunnel_user
 const CONFIGURATION_SSH_TUNNEL_PASS = 'carforagest_configuration_ssh_tunnel_pass';
 
 // ADMIN
-const SUBMIT_NAME_CSV_MANUFACTURERS_UPLOAD = 'csv_manufacturers_upload';
+const NEXT_STEP_BUTTON = 'next_step_button';
+const DASHBOARD_BUTTON = 'dashboard_button';
+
+const START_IMPORT = 'start_import';
+
+
+const SQL_MANUFACTURER = 'select name,enabled,name as description, name as meta_title, name as meta_keyword from gest_publisher';

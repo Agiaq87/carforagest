@@ -13,7 +13,7 @@
                             <input type="text"
                                    id="sql-query"
                                    class="form-control"
-                                   value="select name,enabled,name as description, name as meta_title, name as meta_keyword from gest_publisher"
+                                   value="{$sql}"
                                    readonly>
                             <span class="input-group-btn">
                                 <button class="btn btn-default" onclick="copyQuery()">
@@ -46,7 +46,7 @@
         <i class="icon-upload"></i> {l s='Importa Marchi da CSV' mod='carforagest'}
     </div>
     <div class="panel-body">
-        <form action="" method="post" enctype="multipart/form-data">
+        <form method="post" enctype="multipart/form-data">
             <div class="form-group">
                 <input type="hidden"
                        name="mode"
@@ -60,13 +60,16 @@
                        name="admin_token"
                        id="admin_token"
                        value="{$token}">
+                <input type="hidden" name="import_argument" value="{$argument}">
+                <input type="hidden" name="import_modality" value="{$mode}">
+                <input type="hidden" name="import_step" value="{$step}">
                 <label for="csv_file">{l s='Seleziona un file CSV' mod='carforagest'}</label>
                 <input type="file" name="csv_file" id="csv_file" class="form-control">
             </div>
-            <button type="submit" name="csv_upload" class="btn btn-success">
+            <button type="submit" name="next_step_button" class="btn btn-success">
                 <i class="icon-cloud-upload"></i> {l s='Carica CSV' mod='carforagest'}
             </button>
-            <button type="submit" name="return" class="btn btn-default pull-right">
+            <button type="submit" name="dashboard_button" class="btn btn-default pull-right">
                 <i class="icon-back"></i> {l s='Torna alla home' mod='carforagest'}
             </button>
         </form>

@@ -5,14 +5,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalitySelected = document.querySelector('input[name="import_modality"]'); // Indica se csv o DB
     const argumentSelected = document.querySelector('input[name="import_argument"]');  // Indica se marchi, prodotti, fornitori, legato alla select
 
+    const csvButton = document.getElementById('csv-button');
+    const dbButton = document.getElementById('db-button');
+
+    csvButton.addEventListener('click', () => toggleImportOptions('csv'));
+    dbButton.addEventListener('click', () => toggleImportOptions('db'));
+
     selectElement.addEventListener('change', function() {
         const selectedValue = this.value;
         argumentSelected.value = selectedValue;
         console.log("Valore selezionato:", selectedValue);
     });
-    function toggleImportOptions(arg) {
-        console.log("arg", arg);
-        modalitySelected.value = arg;
+    function toggleImportOptions(mode) {
+        document.getElementById('import-options').classList.remove('hidden');
+        modalitySelected.value = mode;
+        console.log(modalitySelected, mode);
     }
     // DASHBOARD
 
