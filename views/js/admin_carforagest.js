@@ -1,5 +1,22 @@
 document.addEventListener('DOMContentLoaded', () => {
 
+    // DASHBOARD
+    const selectElement = document.getElementById('chooser');
+    const modalitySelected = document.querySelector('input[name="import_modality"]'); // Indica se csv o DB
+    const argumentSelected = document.querySelector('input[name="import_argument"]');  // Indica se marchi, prodotti, fornitori, legato alla select
+
+    selectElement.addEventListener('change', function() {
+        const selectedValue = this.value;
+        argumentSelected.value = selectedValue;
+        console.log("Valore selezionato:", selectedValue);
+    });
+    function toggleImportOptions(arg) {
+        console.log("arg", arg);
+        modalitySelected.value = arg;
+    }
+    // DASHBOARD
+
+    // CONFIGURAZIONE
     const setupInput = (input, isEnable) => input.forEach(element => {
         console.log(element);
         isEnable ? element.removeAttribute("disabled") : element.setAttribute("disabled", "");
@@ -32,7 +49,10 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log("click switchOff");
         setupInput(inputs, false);
     })
+    // CONFIGURAZIONE
 
+
+    // IMPORT CSV
     function copyQuery() {
         const queryInput = document.getElementById('sql-query');
         queryInput.select();
@@ -46,4 +66,6 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.innerHTML = originalText;
         }, 2000);
     }
+    // IMPORT CSV
+
 });

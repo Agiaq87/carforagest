@@ -108,3 +108,116 @@ li#subtab-CarforaGestAdmin .mi-settings::before {
 .carforagest-ko {
     border-color: red !important;
 }
+.section-container {
+    margin: 0 -30px;  /* Estende il contenitore oltre i margini del panel */
+}
+
+.section-column {
+    padding: 0 30px;  /* Aggiunge spazio orizzontale tra le colonne */
+    position: relative;  /* Per il separatore */
+}
+
+/* Aggiunge separatori verticali tra le colonne */
+.section-column:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: #ddd;
+    box-shadow: 1px 0 0 #fff;
+}
+
+.import-section {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.section-header {
+    padding: 15px;
+    cursor: pointer;
+    background: #f8f8f8;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background-color 0.3s ease;
+}
+
+.section-header:hover {
+    background: #f0f0f0;
+}
+
+.section-header h3 {
+    margin: 0;
+    font-size: 16px;
+    color: #363A41;
+    font-weight: 600;
+}
+
+.section-header i.icon-angle-down {
+    transition: transform 0.3s ease;
+}
+
+.section-header.active i.icon-angle-down {
+    transform: rotate(180deg);
+}
+
+.section-content {
+    padding: 20px;
+    display: none;
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: all 0.3s ease;
+}
+
+.section-content.active {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.mb-2 {
+    margin-bottom: 15px;
+}
+
+.btn-block {
+    width: 100%;
+    margin-bottom: 10px;
+    text-align: left;
+    padding: 10px 15px;
+    transition: all 0.2s ease;
+}
+
+.btn-block:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.btn-block i {
+    margin-right: 10px;
+    width: 20px;
+    text-align: center;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+    .section-column::after {
+        display: none;  /* Rimuove i separatori su schermi piccoli */
+    }
+
+    .section-column {
+        margin-bottom: 30px;  /* Aggiunge spazio verticale tra le sezioni */
+    }
+}
+form{
+    margin: 16px;
+}
+
+#submit {
+    margin: 32px auto;
+}

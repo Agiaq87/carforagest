@@ -7,18 +7,17 @@ if (!defined('_PS_VERSION_')) {
 require_once _PS_MODULE_DIR_ . 'carforagest/classes/FileUtils.php';
 require_once _PS_MODULE_DIR_ . 'carforagest/classes/ManufacturerImporter.php';
 require_once _PS_MODULE_DIR_ . 'carforagest/classes/Consumer.php';
+require_once _PS_MODULE_DIR_ . 'carforagest/classes/CarforaGestState.php';
 
 class CarforaGestAdminController extends ModuleAdminController implements Consumer
 {
     private AjaxInfo $lastAjaxInfo;
-    private array $selection;
-    private string|null $selected;
+    private CarforaGestState $state;
     private array $extractedData = array();
     private ManufacturerImporter $manufacturerImporter;
+    private FileUtils $fileUtils;
     public function __construct()
     {
-        $this->selection = ["CSV", "DB", "FILE", "MANUFACTURERS_CSV"];
-        $this->selected = null;
         $this->bootstrap = true;
 
         // Rimuovi i pulsanti di default
@@ -30,6 +29,7 @@ class CarforaGestAdminController extends ModuleAdminController implements Consum
         $this->table = false;
 
         // Classi di utilità
+        $this->state = new CarforaGestState(); // Lo stato è settato a reset
         $this->manufacturerImporter = new ManufacturerImporter(Language::getLanguages(false));
         $this->manufacturerImporter->setListener([$this, 'handleMessage']);
         $this->fileUtils = new FileUtils();
@@ -42,18 +42,39 @@ class CarforaGestAdminController extends ModuleAdminController implements Consum
 
     public function initContent()
     {
-        switch ($this->selected) {
-            case $this->selection[0]: { // "CSV"
+        switch ($this->state->getModalityForSwitch()) {
+            case 0: {
+                $this->content = $this->displayDefaultButtons();
+                break;
+            }
+            case 1: {
+                $this->content = $this->displayDbForm($this->state->getCurrentArgument());
+                break;
+            }
+            case 2: {
+                $this->content = $this->displayCsvForm($this->state->getCurrentArgument());
+                break;
+            }
+            case 3: {
+                $this->content = $this->displayProgress($this->state->getCurrentArgument());
+                $this->handleFileImport(
+                    $this->state->getCurrentArgument()
+                );
+                break;
+            }
+        }
+        /*switch ($this->currentSelectedArgument) {
+            case $this->selectionArgument[0]: { // "CSV"
                 $this->content = $this->displayCsvForm();
                 break;
             }
-            case $this->selection[1]: { // "DB"
+            case $this->selectionArgument[1]: { // "DB"
                 $this->content = $this->displayDbForm();
                 break;
             }
-            case $this->selection[2]: { // "FILE"
+            case $this->selectionArgument[2]: { // "FILE"
                 $this->content = $this->displayProgress();
-                $this->handleFileImport(5, $this->selection[3]);
+                $this->handleFileImport(5, $this->selectionArgument[3]);
                 print_r($this->extractedData);
                 break;
             }
@@ -61,30 +82,43 @@ class CarforaGestAdminController extends ModuleAdminController implements Consum
                 $this->content = $this->displayDefaultButtons();
                 break;
             }
-        }
+        }*/
 
         parent::initContent();
     }
 
     public function postProcess()
     {
-        // Va alla pagina di import csv
+        // Gestisci i stati
+        // Ritorna alla dashboard sempre
+        if (Tools::isSubmit($this->state->getResetState())) {
+            $this->state->resetState();
+        }
+        // Vai dalla dashboard alla selezione
+        if (Tools::isSubmit('csv-or-db-chooser')) { // Viene dalla pagina principale
+            $this->state->detectState(
+                Tools::getValue('import_modality'),
+                Tools::getValue('import_modality')
+            );
+            print_r($this->state->toArray());
+        }
+        /*// Va alla pagina di import csv
         if (Tools::isSubmit('submit_carforagest_csv')) {
-            $this->selected = $this->selection[0];
+            $this->currentSelectedArgument = $this->selectionArgument[0];
         }
         // Va alla pagina import db
         if (Tools::isSubmit('submit_carforagest_db')) {
-            $this->selected = $this->selection[1];
+            $this->currentSelectedArgument = $this->selectionArgument[1];
         }
         // Va alla pagina di import con la progress bar
         if (Tools::isSubmit('csv_upload')) {
             print_r("submit csv catched");
-            $this->selected = $this->selection[2];
+            $this->currentSelectedArgument = $this->selectionArgument[2];
         }
         // Va alla pagina principale
         if (Tools::isSubmit('submit_carforagest_home')) {
-            $this->selected = null;
-        }
+            $this->currentSelectedArgument = null;
+        }*/
 
         // Operazioni con i listener
         if (Tools::isSubmit(SUBMIT_NAME_CSV_MANUFACTURERS_UPLOAD)) {
@@ -100,9 +134,6 @@ class CarforaGestAdminController extends ModuleAdminController implements Consum
             $this->handleAjax();
         }
 
-        if (Tools::isSubmit('return')) {
-            $this->selected = null;
-        }
 
         parent::postProcess();
     }
@@ -125,10 +156,12 @@ class CarforaGestAdminController extends ModuleAdminController implements Consum
     {
         print_r("DISPLAY_DEFAULT_FORM");
         $this->context->smarty->assign([
-            'csv' => $this->selection[0],
-            'db' => $this->selection[1],
+            'csv' => $this->selectionArgument[0],
+            'db' => $this->selectionArgument[1],
             'url' => $this->module->getPathUri(),
-            'token' => $this->token
+            'token' => $this->token,
+            'selection' => $this->selectionArgument,
+            'previous_button' => ''
         ]);
 
         return $this->context->smarty->fetch('module:carforagest/views/templates/admin/import_buttons.tpl');
@@ -160,15 +193,15 @@ class CarforaGestAdminController extends ModuleAdminController implements Consum
         $cancelButton = '';
         print_r("DISPLAY_PROGRESS");
 
-        switch ($this->selected) {
-            case $this->selection[2]: {
+        switch ($this->currentSelectedArgument) {
+            case $this->selectionArgument[2]: {
                 $mode = 'csv';
                 $nextButton = 'Carica i dati estratti dal file CSV';
                 $submitName = SUBMIT_NAME_CSV_MANUFACTURERS_UPLOAD;
                 $cancelButton = 'Annulla';
                 break;
             }
-            case $this->selection[3]: {
+            case $this->selectionArgument[3]: {
                 $mode = 'manufacturers';
                 break;
             }
@@ -233,17 +266,20 @@ class CarforaGestAdminController extends ModuleAdminController implements Consum
         die($this->lastAjaxInfo->toJson());
     }
 
-    public function handleFileImport(int $maxNumOfColumn, string $nextStep)
+    public function handleFileImport(string $nextStep)
     {
-        $result = $this->fileUtils->extractData($maxNumOfColumn); // TODO gestire il numero di colonne per i prodotti
+        $result = $this->fileUtils->extractData(
+            $this->state->getMaxNumOfColumnsOfFileForArgument()
+        );
+
         if (!$result->status) {
             return $result;
         }
 
-        $this->selected = $nextStep; // "MANUFACTURERS_CSV"
+        $this->currentSelectedArgument = $nextStep; // "MANUFACTURERS_CSV"
         $this->extractedData = $result->data;
         print_r($this->extractedData);
-        //$result = $this->manufacturerImporter->importManufacturers($this->extractedData); IT WORK!!!
-        $this->handleResult(new CarforaGestResult(true, "File estratto con successo", null));
+        $result = $this->manufacturerImporter->importManufacturers($this->extractedData);
+        $this->handleResult($result);
     }
 }
