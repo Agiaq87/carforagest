@@ -3,7 +3,7 @@
         <i class="icon-info-circle"></i> {l s='Istruzioni per l\'importazione' mod='carforagest'}
     </div>
     <div class="panel-body">
-        <div class="alert alert-info">
+        <div id="alert" class="alert alert-info">
             <h4>{l s='Come preparare il file CSV:' mod='carforagest'}</h4>
             <ol>
                 <li>
@@ -37,6 +37,10 @@
                 <li>{l s='Il file CSV deve essere salvato in formato UTF-8' mod='carforagest'}</li>
                 <li>{l s='IMPORTANTE: deve essere presente l\'header nel csv' mod='carforagest'}</li>
             </ol>
+        </div>
+        <div id="message" class="alert alert-info hidden">
+            <h4>{l s='Importazione in corso...' mod='carforagest'}</h4>
+            <p id="progress_text"></p>
         </div>
     </div>
 </div>

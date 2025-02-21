@@ -6,21 +6,19 @@ if (!defined('_PS_VERSION_')) {
 
 require_once _PS_MODULE_DIR_ . 'carforagest/classes/FileUtils.php';
 require_once _PS_MODULE_DIR_ . 'carforagest/classes/ManufacturerImporter.php';
-require_once _PS_MODULE_DIR_ . 'carforagest/classes/Consumer.php';
 
-class CarforaGestAdminController extends ModuleAdminController implements Consumer
+class CarforaGestAdminController extends ModuleAdminController
 {
-    private AjaxInfo $lastAjaxInfo;
     private array $modalities = ['reset', 'db', 'csv']; // Questo individua se importare con il CSV o con IL DB
     private int $currentModalities = 0;
     private array $step = ['dashboard', 'importer', 'progress'];
     private int $currentStep = 0;
-    private array $arguments = ['Reset', 'Fornitori', 'Marchi', 'Prodotti'];
+    private array $arguments = ['Reset', /*'Fornitori',*/ 'Marchi', 'Prodotti'];
     private int $currentArgument = 0;
     private array $maxColumnsInFile;
     private array $extractedData = array();
-    private ManufacturerImporter $manufacturerImporter;
     private FileUtils $fileUtils;
+    private ManufacturerImporter $manufacturerImporter;
     public function __construct()
     {
         $this->bootstrap = true;
@@ -32,13 +30,12 @@ class CarforaGestAdminController extends ModuleAdminController implements Consum
         // Rimuovi la lista predefinita se presente
         $this->list_no_link = true;
         $this->table = false;
-
         // Classi di utilità
-        $this->manufacturerImporter = new ManufacturerImporter(Language::getLanguages(false));
-        $this->manufacturerImporter->setListener([$this, 'handleMessage']);
         $this->fileUtils = new FileUtils();
-
-        $this->lastAjaxInfo = new AjaxInfo(new CarforaGestResult(true, "OK", null), 1, 1);
+        $this->languages = Language::getLanguages(false);
+        $this->shop = Shop::getShops(true);
+        $this->db = Db::getInstance();
+        $this->manufacturerImporter = new ManufacturerImporter($this->languages, $this->shop);
 
         $this->maxColumnsInFile = [
             $this->arguments[0] => 0,
@@ -74,7 +71,6 @@ class CarforaGestAdminController extends ModuleAdminController implements Consum
 
     public function postProcess()
     {
-        print_r($_POST);
         // Gestisci i stati
         // Ritorna alla dashboard sempre
         if (Tools::isSubmit(DASHBOARD_BUTTON)) {
@@ -93,15 +89,13 @@ class CarforaGestAdminController extends ModuleAdminController implements Consum
 
         // pROCEDI CON I LISTENER
         if (Tools::isSubmit(START_IMPORT)) {
-            $this->manufacturerImporter->importManufacturers($this->extractedData);
+            print_r('start_import');
+            $result = $this->importManufacturers($this->extractedData);
+            $this->handleResult($result);
+            $this->reset();
         }
 
-        // AJAX
-        if (Tools::isSubmit('ajaxCheck')) {
-            $this->handleAjax();
-        }
-
-        parent::postProcess();
+        return parent::postProcess();
     }
 
     private function handleResult(CarforaGestResult $result)
@@ -113,18 +107,16 @@ class CarforaGestAdminController extends ModuleAdminController implements Consum
                 $message,
                 3
             );
-            $this->lastAjaxInfo = new AjaxInfo(new CarforaGestResult(false, "Errore nell' importazione del file", null), 1, 1);
         } else {
             $this->confirmations[] = $message;
-            $this->lastAjaxInfo = new AjaxInfo(new CarforaGestResult(true, "Tutto pronto", null), 1, 1);
         }
     }
 
     private function displayDefaultButtons(): string
     {
-        print_r("DISPLAY_DEFAULT_FORM");
+        //print_r("DISPLAY_DEFAULT_FORM");
         $this->context->smarty->assign([
-            'url' => $this->module->getPathUri(),
+            'url' => $this->context->link->getAdminLink('CarforaGestAdmin'),
             'token' => $this->token,
             'selection' => [$this->arguments[1], $this->arguments[2], $this->arguments[3]],
             'nextState' => NEXT_STEP_BUTTON,
@@ -150,7 +142,7 @@ class CarforaGestAdminController extends ModuleAdminController implements Consum
             }
         }
         $this->context->smarty->assign([
-            'url' => $this->module->getPathUri(),
+            'url' => $this->context->link->getAdminLink('CarforaGestAdmin'),
             'token' => $this->token,
             'argument' => $this->arguments[$this->currentArgument],
             'mode' => $this->modalities[$this->currentModalities],
@@ -164,7 +156,7 @@ class CarforaGestAdminController extends ModuleAdminController implements Consum
 
     private function displayDbForm(): string
     {
-        print_r("DISPLAY_DB_FORM");
+        //print_r("DISPLAY_DB_FORM");
         // Qui implementa la logica per il form DB
         // ...
         return '';
@@ -173,10 +165,10 @@ class CarforaGestAdminController extends ModuleAdminController implements Consum
     private function displayProgress(): string
     {
         $mode = '';
-        print_r("DISPLAY_PROGRESS");
+        //print_r("DISPLAY_PROGRESS");
 
         $this->context->smarty->assign([
-            'url' => $this->module->getPathUri(),
+            'url' => $this->context->link->getAdminLink('CarforaGestAdmin'),
             'token' => $this->token,
             'mode' => $this->modalities[$this->currentModalities],
             'argument' => $this->arguments[$this->currentArgument],
@@ -218,21 +210,6 @@ class CarforaGestAdminController extends ModuleAdminController implements Consum
         }
     }
 
-    /**
-     * Gestisce i valori da passare con AJAX
-     * @param array $info
-     * @return void
-     */
-    public function handleMessage(AjaxInfo $info)
-    {
-        $this->lastAjaxInfo = $info;
-    }
-
-    public function handleAjax()
-    {
-        die($this->lastAjaxInfo->toJson());
-    }
-
     public function handleFileImport()
     {
         $result = $this->fileUtils->extractData(
@@ -245,7 +222,7 @@ class CarforaGestAdminController extends ModuleAdminController implements Consum
 
         $this->extractedData = $result->data;
         print_r($this->extractedData);
-        //$result = $this->manufacturerImporter->importManufacturers($this->extractedData); IT WORK
+        $result = $this->manufacturerImporter->importManufacturers($this->extractedData);
         $this->handleResult($result);
     }
 

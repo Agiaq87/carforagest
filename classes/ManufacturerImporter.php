@@ -1,13 +1,14 @@
 <?php
 
-require_once __DIR__ . '/../classes/Producer.php';
-require_once __DIR__ . '/../classes/AjaxInfo.php';
 require_once __DIR__ . '/../classes/CarforaGestResult.php';
 
-class ManufacturerImporter extends Producer
+class ManufacturerImporter
 {
-    public function __construct(array $languages) {
+    public function __construct(array $languages, array $shop) {
         $this->languages = $languages;
+        $this->shop = $shop;
+        $this->db = Db::getInstance();
+        print_r($this->shop);
     }
 
     /**
@@ -60,6 +61,17 @@ class ManufacturerImporter extends Producer
                     null
                 );
             }
+
+            foreach($this->shop as $shop) {
+                $id_shop = $shop['id_shop'];
+
+                $insertData = array(
+                    'id_manufacturer' => $temp->id,
+                    'id_shop' => (int)$id_shop
+                );
+                $this->db->insert('manufacturer_shop', $insertData);
+            }
+
             return new CarforaGestResult(
                 true,
                 'Marchio ' . $temp->name . ' aggiunto con successo',
@@ -90,13 +102,9 @@ class ManufacturerImporter extends Producer
             ];
         }
         $counter = 1;
-        $result = null;
 
         foreach ($manufacturers as $manufacturer) {
-            $result = $this->newManufacturer($manufacturer[0], $manufacturer[1], $manufacturer[2], $manufacturer[3], $manufacturer[4]);
-            $this->produce(
-                new AjaxInfo($result, $counter, $total)
-            );
+            $this->newManufacturer($manufacturer[0], $manufacturer[1], $manufacturer[2], $manufacturer[3], $manufacturer[4]);
             $counter++;
         }
 
