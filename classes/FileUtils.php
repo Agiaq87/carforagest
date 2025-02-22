@@ -65,7 +65,7 @@ class FileUtils
 
     public function checkHeader($handle, int $numOfColumn): CarforaGestResult
     {
-        $header = fgetcsv($handle, separator: ',');
+        $header = fgetcsv($handle, 1000, ',');
         return $header != null && count($header) === $numOfColumn ? new CarforaGestResult(true, "Header valido.", $header) : new CarforaGestResult(false, "Header non valido.", null);
     }
 

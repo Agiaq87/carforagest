@@ -8,7 +8,6 @@ class ManufacturerImporter
         $this->languages = $languages;
         $this->shop = $shop;
         $this->db = Db::getInstance();
-        print_r($this->shop);
     }
 
     /**
@@ -21,7 +20,7 @@ class ManufacturerImporter
      * @param string $metaKeyword
      * @return array $result
      */
-    public function newManufacturer(
+    public function insertManufacturer(
         string $name,
         bool $active,
         string $description,
@@ -93,19 +92,11 @@ class ManufacturerImporter
      */
     public function importManufacturers(array $manufacturers): CarforaGestResult
     {
-        $total = count($manufacturers);
-
-        if ($total === 0) {
-            return [
-                'status' => false,
-                'message' => 'Nessun marchio da inserire',
-            ];
-        }
-        $counter = 1;
-
         foreach ($manufacturers as $manufacturer) {
-            $this->newManufacturer($manufacturer[0], $manufacturer[1], $manufacturer[2], $manufacturer[3], $manufacturer[4]);
-            $counter++;
+            $result = $this->insertManufacturer($manufacturer[0], $manufacturer[1], $manufacturer[2], $manufacturer[3], $manufacturer[4]);
+            if (!$result->status) {
+                return $result;
+            }
         }
 
         return new CarforaGestResult(true, 'Tutti i marchi sono stati inseriti', null);

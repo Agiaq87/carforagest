@@ -24,14 +24,11 @@
                     </div>
                 </li>
                 <li>{l s='Assicurati che le colonne nel CSV siano nell\'ordine corretto:' mod='carforagest'}
-                    <ul>
-                        <li><strong>1.</strong> name (nome del marchio)</li>
-                        <li><strong>2.</strong> enabled (stato attivo: 0 o 1)</li>
-                        <li><strong>3.</strong> description (descrizione)</li>
-                        <li><strong>4.</strong> meta_title (titolo meta)</li>
-                        <li><strong>5.</strong> meta_keyword (parole chiave meta)</li>
-                    </ul>
-                </li>
+                <ul>
+                    {foreach from=$warningSteps item=step}
+                        <li><strong>{l s=$step mod='carforagest'}</strong></li>
+                    {/foreach}
+                </ul>
                 <li>{l s='IMPORTANTE: Il file non verrà elaborato se non rispetta esattamente questo numero e ordine di colonne.' mod='carforagest'}</li>
                 <li>{l s='Usare come separatore di valori la virgola e il classico carriage return per indicare il fine riga' mod='carforagest'}</li>
                 <li>{l s='Il file CSV deve essere salvato in formato UTF-8' mod='carforagest'}</li>
@@ -47,10 +44,11 @@
 
 <div class="panel">
     <div class="panel-heading">
-        <i class="icon-upload"></i> {l s='Importa Marchi da CSV' mod='carforagest'}
+        <i class="icon-upload"></i>
+        {l s=$panelHeading mod='carforagest'}
     </div>
     <div class="panel-body">
-        <form method="post" enctype="multipart/form-data">
+        <form id="form" method="post" enctype="multipart/form-data">
             <div class="form-group">
                 <input type="hidden"
                        name="mode"
@@ -66,14 +64,15 @@
                        value="{$token}">
                 <input type="hidden" name="import_argument" value="{$argument}">
                 <input type="hidden" name="import_modality" value="{$mode}">
-                <input type="hidden" name="import_step" value="{$step}">
+                <input type="hidden" id="import_step" name="import_step" value="{$step}">
                 <label for="csv_file">{l s='Seleziona un file CSV' mod='carforagest'}</label>
                 <input type="file" name="csv_file" id="csv_file" class="form-control">
+                <p><strong>L'importazione potrebbe durare qualche minuto e partirà non appena premi il bottone Carica csv, nel frattempo prenditi un caffè...</strong></p>
             </div>
-            <button type="submit" name="next_step_button" class="btn btn-success">
+            <button type="submit" id="next_step_button" name="next_step_button" class="btn btn-success">
                 <i class="icon-cloud-upload"></i> {l s='Carica CSV' mod='carforagest'}
             </button>
-            <button type="submit" name="dashboard_button" class="btn btn-default pull-right">
+            <button type="submit" id="dashboard_button" name="dashboard_button" class="btn btn-default pull-right">
                 <i class="icon-back"></i> {l s='Torna alla home' mod='carforagest'}
             </button>
         </form>

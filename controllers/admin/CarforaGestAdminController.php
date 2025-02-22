@@ -6,6 +6,8 @@ if (!defined('_PS_VERSION_')) {
 
 require_once _PS_MODULE_DIR_ . 'carforagest/classes/FileUtils.php';
 require_once _PS_MODULE_DIR_ . 'carforagest/classes/ManufacturerImporter.php';
+require_once _PS_MODULE_DIR_ . 'carforagest/classes/CategoryImporter.php';
+
 
 class CarforaGestAdminController extends ModuleAdminController
 {
@@ -13,12 +15,14 @@ class CarforaGestAdminController extends ModuleAdminController
     private int $currentModalities = 0;
     private array $step = ['dashboard', 'importer', 'progress'];
     private int $currentStep = 0;
-    private array $arguments = ['Reset', /*'Fornitori',*/ 'Marchi', 'Prodotti'];
+    private array $arguments = ['Reset', 'Marchi', 'Prodotti', 'Categorie'];
     private int $currentArgument = 0;
     private array $maxColumnsInFile;
     private array $extractedData = array();
     private FileUtils $fileUtils;
     private ManufacturerImporter $manufacturerImporter;
+    private CategoryImporter $categoryImporter;
+
     public function __construct()
     {
         $this->bootstrap = true;
@@ -34,14 +38,14 @@ class CarforaGestAdminController extends ModuleAdminController
         $this->fileUtils = new FileUtils();
         $this->languages = Language::getLanguages(false);
         $this->shop = Shop::getShops(true);
-        $this->db = Db::getInstance();
         $this->manufacturerImporter = new ManufacturerImporter($this->languages, $this->shop);
+        $this->categoryImporter = new CategoryImporter($this->languages, $this->shop);
 
         $this->maxColumnsInFile = [
             $this->arguments[0] => 0,
-            $this->arguments[1] => 0, // Fornitori
-            $this->arguments[2] => 5, // Marchi
-            $this->arguments[3] => 12
+            $this->arguments[1] => 5, // Marchi
+            $this->arguments[2] => 12, // Prodotti
+            $this->arguments[3] => 8, // Categorie
         ];
         //
         parent::__construct();
@@ -50,17 +54,21 @@ class CarforaGestAdminController extends ModuleAdminController
     public function initContent()
     {
         print_r(['Step' => $this->currentStep, 'MODE' => $this->currentModalities, 'ARG' =>$this->currentArgument]);
+
+        $url = $this->context->link->getAdminLink('CarforaGestAdmin');
+        $token = $this->token;
+
         switch ($this->currentStep) {
             default: {
-                $this->content = $this->displayDefaultButtons();
+                $this->content = $this->displayDefaultButtons($url, $token);
                 break;
             }
-            case 1: {
-                $this->chooseImporter(); // QUi si carica il file
+            case 1: { // QUi si carica il content con le informazioni da mostrare
+                $this->chooseImporterContentFromArgument($url, $token);
                 break;
             }
             case 2: {
-                $this->content = $this->displayProgress(); // Il file è stato caricato, estraggo i dati e preparo il tutto per i listener
+                $this->content = $this->displayProgress($url, $token); // Il file è stato caricato, estraggo i dati e procedo con l'inserimento
                 $this->chooseActionInProgress();
                 break;
             }
@@ -87,14 +95,6 @@ class CarforaGestAdminController extends ModuleAdminController
             $this->currentStep+=1;
         }
 
-        // pROCEDI CON I LISTENER
-        if (Tools::isSubmit(START_IMPORT)) {
-            print_r('start_import');
-            $result = $this->importManufacturers($this->extractedData);
-            $this->handleResult($result);
-            $this->reset();
-        }
-
         return parent::postProcess();
     }
 
@@ -112,12 +112,12 @@ class CarforaGestAdminController extends ModuleAdminController
         }
     }
 
-    private function displayDefaultButtons(): string
+    private function displayDefaultButtons($url, $token): string
     {
         //print_r("DISPLAY_DEFAULT_FORM");
         $this->context->smarty->assign([
-            'url' => $this->context->link->getAdminLink('CarforaGestAdmin'),
-            'token' => $this->token,
+            'url' => $url,
+            'token' => $token,
             'selection' => [$this->arguments[1], $this->arguments[2], $this->arguments[3]],
             'nextState' => NEXT_STEP_BUTTON,
             'step' => $this->step[0],
@@ -126,28 +126,17 @@ class CarforaGestAdminController extends ModuleAdminController
         return $this->context->smarty->fetch('module:carforagest/views/templates/admin/import_buttons.tpl');
     }
 
-    private function displayCsvForm(): string
+    private function displayCsvForm($sql, $panelHeading, $steps, $url, $token): string
     {
-        $sql = '';
-        switch ($this->currentArgument) {
-            case 1: { // Fornitori
-                break;
-            }
-            case 2: { // Marchi
-                $sql = SQL_MANUFACTURER;
-                break;
-            }
-            case 3: { // Prodotti
-                break;
-            }
-        }
         $this->context->smarty->assign([
-            'url' => $this->context->link->getAdminLink('CarforaGestAdmin'),
-            'token' => $this->token,
+            'url' => $url,
+            'token' => $token,
             'argument' => $this->arguments[$this->currentArgument],
             'mode' => $this->modalities[$this->currentModalities],
             'step' => $this->step[$this->currentStep],
+            'warningSteps' => $steps,
             'sql' => $sql,
+            'panelHeading' => $panelHeading,
             'nextState' => NEXT_STEP_BUTTON
         ]);
 
@@ -162,17 +151,18 @@ class CarforaGestAdminController extends ModuleAdminController
         return '';
     }
 
-    private function displayProgress(): string
+    private function displayProgress($url, $token): string
     {
-        $mode = '';
-        //print_r("DISPLAY_PROGRESS");
+        $sql = SQL_PRODUCT;
 
         $this->context->smarty->assign([
-            'url' => $this->context->link->getAdminLink('CarforaGestAdmin'),
-            'token' => $this->token,
+            'url' => $url,
+            'token' => $token,
             'mode' => $this->modalities[$this->currentModalities],
             'argument' => $this->arguments[$this->currentArgument],
             'step' => $this->step[$this->currentStep],
+            'sql' => $sql,
+            'nextState' => NEXT_STEP_BUTTON
         ]);
 
         return $this->context->smarty->fetch('module:carforagest/views/templates/admin/import_progress.tpl');
@@ -222,8 +212,6 @@ class CarforaGestAdminController extends ModuleAdminController
 
         $this->extractedData = $result->data;
         print_r($this->extractedData);
-        $result = $this->manufacturerImporter->importManufacturers($this->extractedData);
-        $this->handleResult($result);
     }
 
     private function reset()
@@ -233,38 +221,91 @@ class CarforaGestAdminController extends ModuleAdminController
         $this->currentArgument = 0;
     }
 
-    private function chooseImporter()
+    /**
+     * Questo metodo si occupa solamente di definire i parametri per il content in base alla modalità registrata
+     * NOTA BENE: Questo metodo riguarda solamente il secondo step, ovvero l'import DB o CSV
+     * @return void
+     */
+    private function chooseImporterContentFromArgument($url, $token)
     {
-        switch ($this->currentModalities) {
+        switch ($this->modalities[$this->currentModalities]) {
             // DB
-            case 1: {
+            case $this->modalities[1]: {    // DB
                 $this->content = $this->displayDbForm();
                 break;
             }
             // CSV
-            case 2: {
-                $this->content = $this->displayCsvForm();
+            case $this->modalities[2]: {
+                $sql = '';
+                $panelHeading = '';
+                $steps = array();
+                switch ($this->currentArgument) {
+                    case 1: { // Marchi
+                        $sql = SQL_MANUFACTURER;
+                        $panelHeading = MANUFACTURER_PANEL_HEADING_CSV_IMPORT;
+                        $steps = MANUFACTURER_WARNING_STEPS;
+                        break;
+                    }
+                    case 2: { // Prodotti
+                        $sql = SQL_PRODUCT;
+                        $panelHeading = PRODUCT_PANEL_HEADING_CSV_IMPORT;
+                        $steps = PRODUCT_WARNING_STEPS;
+                        break;
+                    }
+                    case 3: { // Categorie
+                        $sql = SQL_CATEGORY;
+                        $panelHeading = CATEGORY_PANEL_HEADING_CSV_IMPORT;
+                        $steps = CATEGORY_WARNING_STEPS;
+                        break;
+                    }
+                }
+                $this->content = $this->displayCsvForm($sql, $panelHeading, $steps, $url, $token);
                 break;
+            }
+            case $this->modalities[3]: {
+
             }
             default: {
                 $this->reset();
-                $this->content = $this->displayDefaultButtons();
+                $this->content = $this->displayDefaultButtons($url, $token);
                 break;
             }
         }
     }
 
+    /**
+     * Una volta caricato il file CSV, in questo metodo procedo a leggerlo e inserire i dati nel DB
+     *  con gli appositi ObjectModel.
+     * @return void
+     */
     private function chooseActionInProgress()
     {
         if ($this->currentModalities === $this->modalities[1]) {
             // DB
         } else {
-            $this->handleFileImport();
+            $this->handleFileImport(); // Gestisce in automatico
+
             if (empty($this->extractedData)) {
                 $this->handleResult(new CarforaGestResult(false, "Nessun file caricato", null));
                 return;
             }
 
+            switch ($this->arguments[$this->currentArgument]) {
+                case $this->arguments[1]: { // Marchi
+                    $result = $this->manufacturerImporter->importManufacturers($this->extractedData);
+                    $this->handleResult($result);
+                    break;
+                }
+                case $this->arguments[2]: { // Prodotti
+                    // TODO
+                    break;
+                }
+                case $this->arguments[3]: { // Categorie
+                    $result = $this->categoryImporter->importCategories($this->extractedData);
+                    $this->handleResult($result);
+                    break;
+                }
+            }
         }
     }
 }

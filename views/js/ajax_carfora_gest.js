@@ -3,7 +3,9 @@ $(document).ready(function(){
     token = document.getElementById('admin_token').value;
     nextButton = document.getElementById('next_step_button');
     returnButton = document.getElementById('dashboard_button');
-    step = document.getElementById('step');
+    step = document.getElementById('import_step');
+    message = document.getElementById('message');
+    form = document.getElementById('form');
 
     progressText = document.getElementById('progress_text');
     count = 1;
@@ -36,18 +38,51 @@ $(document).ready(function(){
         }
     }
 
-    if (step.value === 'importer') {
+    /*if (step.value === 'importer') {
         alert = document.getElementById('alert');
-        alert.classList.add('hidden');
-        progressText.classList.remove('hidden');
         nextButton.addEventListener('click', function(event){
+            alert.classList.add('hidden');
+            progressText.classList.remove('hidden');
+            message.classList.remove('hidden');
             console.log("cliccato");
             returnButton.disabled = true;
             nextButton.disabled = true;
+            ajaxCall('next_step_button');
+
             setInterval(updateProcess, 5000);
         });
-    }
+    }*/
 
+    /*const ajaxCall = async (action, data = {}) => {
+        try {
+            const response = await fetch(postUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    ajax: 1,
+                    action: action,
+                    token: token,
+                    ...data
+                })
+            });
 
+            const result = await response.text();
+            //console.log("RESULT", result);
+            let jsonResponse;
+            try {
+                jsonResponse = JSON.parse(result);
+            } catch (e) {
+                console.error('Failed to parse JSON:', response.text());
+                throw e;
+            }
+
+            return jsonResponse;
+        } catch (error) {
+            console.error('Error:', error);
+            throw error;
+        }
+    };*/
 })
 
