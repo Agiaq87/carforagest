@@ -52,9 +52,9 @@ class ProductImporter
         $product = new Product();
         $product->reference = $reference;
         $product->price = $price;
-        $product->id_category_default = $id_category;
-        $product->id_shop_default = $this->shop_id;
-        $product->active = 1; // Attiva il prodotto
+        $product->id_category_default = $this->getCategoryIdByName($categoryName);
+        $product->id_shop_default = 1;
+        $product->active = 1;
 
         // Aggiunge i dati multilingua
         foreach ($this->languages as $lang) {
