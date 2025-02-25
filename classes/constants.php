@@ -10,12 +10,17 @@ const CONFIGURATION_SSH_TUNNEL_PORT = 'carforagest_configuration_ssh_tunnel_port
 const CONFIGURATION_SSH_TUNNEL_USER = 'carforagest_configuration_ssh_tunnel_user';
 const CONFIGURATION_SSH_TUNNEL_PASS = 'carforagest_configuration_ssh_tunnel_pass';
 
+// CHACHE MANAGER
+const CACHE_KEY = 'carforagest_cache_api_key';
+
+
 // ADMIN
 const NEXT_STEP_BUTTON = 'next_step_button';
 const DASHBOARD_BUTTON = 'dashboard_button';
 
 const START_IMPORT = 'start_import';
 
+const AJAX_CHECK = 'ajax_check';
 
 const SQL_MANUFACTURER = 'select name,enabled,name as description, name as meta_title, name as meta_keyword from gest_publisher';
 const SQL_PRODUCT = 'select name,enabled,name as description, name as meta_title, name as meta_keyword from gest_product';

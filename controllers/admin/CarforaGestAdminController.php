@@ -4,10 +4,11 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+require_once _PS_MODULE_DIR_ . 'carforagest/classes/AjaxInfo.php';
 require_once _PS_MODULE_DIR_ . 'carforagest/classes/FileUtils.php';
 require_once _PS_MODULE_DIR_ . 'carforagest/classes/ManufacturerImporter.php';
 require_once _PS_MODULE_DIR_ . 'carforagest/classes/CategoryImporter.php';
-
+require_once _PS_MODULE_DIR_ . 'carforagest/classes/CacheManager.php';
 
 class CarforaGestAdminController extends ModuleAdminController
 {
@@ -22,6 +23,8 @@ class CarforaGestAdminController extends ModuleAdminController
     private FileUtils $fileUtils;
     private ManufacturerImporter $manufacturerImporter;
     private CategoryImporter $categoryImporter;
+    private AjaxInfo $lastAjaxInfo;
+    private CacheManager $cacheManager;
 
     public function __construct()
     {
@@ -34,12 +37,19 @@ class CarforaGestAdminController extends ModuleAdminController
         // Rimuovi la lista predefinita se presente
         $this->list_no_link = true;
         $this->table = false;
+        $this->lastAjaxInfo = new AjaxInfo(
+            'CarforaGest',
+            0,
+            0,
+            true
+        );
         // Classi di utilità
         $this->fileUtils = new FileUtils();
         $this->languages = Language::getLanguages(false);
         $this->shop = Shop::getShops(true);
         $this->manufacturerImporter = new ManufacturerImporter($this->languages, $this->shop);
         $this->categoryImporter = new CategoryImporter($this->languages, $this->shop);
+        $this->cacheManager = new CacheManager();
 
         $this->maxColumnsInFile = [
             $this->arguments[0] => 0,
@@ -84,6 +94,11 @@ class CarforaGestAdminController extends ModuleAdminController
         if (Tools::isSubmit(DASHBOARD_BUTTON)) {
             $this->reset();
         }
+
+        if (Tools::isSubmit(AJAX_CHECK)) {
+            $this->handleAjax();
+        }
+
         // Vai dalla dashboard alla sezione di import
         if (Tools::isSubmit(NEXT_STEP_BUTTON)) {
             $this->currentArgument = array_search(Tools::getValue('import_argument'), $this->arguments);
@@ -92,7 +107,11 @@ class CarforaGestAdminController extends ModuleAdminController
             print_r($this->currentArgument);
             print_r($this->currentModalities);
             print_r($this->currentStep);
-            $this->currentStep+=1;
+            if ($this->currentStep >= 2) {
+                $this->currentStep = 0;
+            } else {
+                $this->currentStep++;
+            }
         }
 
         return parent::postProcess();
@@ -200,6 +219,11 @@ class CarforaGestAdminController extends ModuleAdminController
         }
     }
 
+    /**
+     * Esaurisce il file leggendolo e restituendo un array dei dati estratti
+     * @return CarforaGestResult|void
+     */
+
     public function handleFileImport()
     {
         $result = $this->fileUtils->extractData(
@@ -212,6 +236,15 @@ class CarforaGestAdminController extends ModuleAdminController
 
         $this->extractedData = $result->data;
         print_r($this->extractedData);
+    }
+
+    /**
+     * Gestisce le chiamate Ajax restituendo i valori
+     * @return void
+     */
+    public function handleAjax()
+    {
+        die (json_encode($this->lastAjaxInfo->toArray()));
     }
 
     private function reset()
