@@ -180,7 +180,9 @@ class CarforaGestAdminController extends ModuleAdminController
             'mode' => $this->modalities[$this->currentModalities],
             'argument' => $this->arguments[$this->currentArgument],
             'step' => $this->step[$this->currentStep],
-            'sql' => $sql,
+            'data' => json_encode($this->extractedData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
+            'baseUrl' => $_SERVER['HTTP_HOST'],
+            'apiKey' => $this->cacheManager->retrieveApiKey(),
             'nextState' => NEXT_STEP_BUTTON
         ]);
 
@@ -323,7 +325,7 @@ class CarforaGestAdminController extends ModuleAdminController
                 return;
             }
 
-            switch ($this->arguments[$this->currentArgument]) {
+            /*switch ($this->arguments[$this->currentArgument]) {
                 case $this->arguments[1]: { // Marchi
                     $result = $this->manufacturerImporter->importManufacturers($this->extractedData);
                     $this->handleResult($result);
@@ -338,7 +340,7 @@ class CarforaGestAdminController extends ModuleAdminController
                     $this->handleResult($result);
                     break;
                 }
-            }
+            }*/
         }
     }
 }

@@ -13,6 +13,7 @@
             </svg>
             <div class="progress-text">
                 <span id="progress_text">Pronto</span>
+                <span id="progress_percentage">0%</span>
             </div>
         </div>
 
@@ -24,6 +25,9 @@
                     <input type="hidden" name="mode" id="mode" value="{$mode}">
                     <input type="hidden" name="argument" id="argument" value="{$argument}">
                     <input type="hidden" name="step" id="step" value="{$step}">
+                    <input type="hidden" name="baseUrl" id="baseUrl" value="{$baseUrl}">
+                    <input type="hidden" name="apiKey" id="apiKey" value="{$apiKey}">
+                    <input type="hidden" name="data" id="data" value="{$data}">
 
                     <button type="submit" id="start_import" class="btn btn-success">
                         <i class="icon-cloud-upload"></i> Avvia Importazione
@@ -36,3 +40,6 @@
         </form>
     </div>
 </div>
+<script>
+const jsonData = {$data}
+</script>
